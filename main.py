@@ -1,3 +1,4 @@
+import argparse
 from pathlib import Path
 from urllib.parse import unquote, urljoin, urlsplit
 
@@ -85,14 +86,41 @@ def parse_book_page(response):
     return content
 
 
-book_text_url = "https://tululu.org/txt.php"
-book_page_url = "https://tululu.org/b9/"
+def main():
+    parser = argparse.ArgumentParser(
+        description="""Script for downloading books from tululu.org site.
+                    Books with ID's from 1 to 10 downloaded default."""
+    )
+    parser.add_argument(
+        "start_id",
+        nargs="?",
+        type=int,
+        default="1",
+        help="Start ID of book for range of book being downloaded",
+    )
+    parser.add_argument(
+        "end_id",
+        nargs="?",
+        type=int,
+        default="10",
+        help="End ID of book for range of book being downloaded",
+    )
+    args = parser.parse_args()
 
-try:
-    response = requests.get(book_page_url)
-    response.raise_for_status()
-    check_for_redirect(response)
-except (ConnectionError, HTTPError):
-    print("Ошибочка")
+    for book_id in range(args.start_id, args.end_id + 1):
+        try:
+            url = f"https://tululu.org/b{book_id}/"
+            response = requests.get(url, allow_redirects=False)
+            response.raise_for_status()
+            check_for_redirect(response)
+        except (ConnectionError, HTTPError):
+            continue
 
-print(parse_book_page(response))
+        content = parse_book_page(response)
+        print("Название:", content["book_title"])
+        print("Автор:", content["book_author"])
+        print()
+
+
+if __name__ == "__main__":
+    main()

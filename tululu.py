@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from urllib.parse import unquote, urljoin, urlsplit
+from urllib.parse import unquote, urljoin
 
 import requests
 from bs4 import BeautifulSoup
@@ -50,8 +50,6 @@ def download_img(url, filename, folder="books"):
 
 
 def parse_book_page(response):
-    sheme, netloc, *_ = urlsplit(response.url)
-    book_site_url = sheme + "://" + netloc
     soup = BeautifulSoup(response.text, "lxml")
 
     header = soup.find("h1").text
@@ -59,7 +57,7 @@ def parse_book_page(response):
     book_author = header.split("::")[1].strip()
 
     book_img = soup.find("div", class_="bookimage").find("img")["src"]
-    book_img_url = urljoin(book_site_url, book_img)
+    book_img_url = urljoin("https://tululu.org", book_img)
     book_img_filename = book_img.split("/")[-1]
 
     genres_html = soup.find("span", class_="d_book").find_all("a")

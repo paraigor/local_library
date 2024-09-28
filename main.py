@@ -89,8 +89,15 @@ for book_id in range(1, 11):
 
     # download_img(img_url, img_filename)
     print(title)
-    comments = soup.find_all("div", class_="texts")
+    # comments = soup.find_all("div", class_="texts")
 
-    for comment in comments:
-        text = comment.find("span").text
-        print(text)
+    # for comment in comments:
+    #     text = comment.find("span").text
+    #     print(text)
+    genres_html = soup.find("span", class_="d_book").find_all("a")
+    genres = []
+    for genre in genres_html:
+        text = genre.text
+        genres.append(text)
+    print(genres)
+    print()

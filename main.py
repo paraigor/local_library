@@ -1,5 +1,5 @@
 from pathlib import Path
-from urllib.parse import urljoin, urlsplit, unquote
+from urllib.parse import unquote, urljoin, urlsplit
 
 import requests
 from bs4 import BeautifulSoup
@@ -87,6 +87,10 @@ for book_id in range(1, 11):
     img_url = urljoin(book_site_url, img)
     img_filename = urlsplit(img_url)[2].split("/")[-1]
 
-    download_img(img_url, img_filename)
+    # download_img(img_url, img_filename)
+    print(title)
+    comments = soup.find_all("div", class_="texts")
 
-
+    for comment in comments:
+        text = comment.find("span").text
+        print(text)

@@ -21,7 +21,7 @@ def download_txt(url, filename, folder="books"):
     book_path = book_folder / book_filename
 
     try:
-        response = requests.get(url, allow_redirects=True)
+        response = requests.get(url, allow_redirects=False)
         response.raise_for_status()
         check_for_redirect(response)
     except (ConnectionError, HTTPError):
@@ -89,20 +89,20 @@ def parse_book_page(response):
 def main():
     parser = argparse.ArgumentParser(
         description="""Script for downloading books from tululu.org site.
-                    Books with ID's from 1 to 10 downloaded default."""
+                    Books with IDs from 1 to 10 downloaded default."""
     )
     parser.add_argument(
         "start_id",
         nargs="?",
         type=int,
-        default="1",
+        default=1,
         help="Start ID of book for range of book being downloaded",
     )
     parser.add_argument(
         "end_id",
         nargs="?",
         type=int,
-        default="10",
+        default=10,
         help="End ID of book for range of book being downloaded",
     )
     args = parser.parse_args()

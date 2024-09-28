@@ -18,6 +18,7 @@ def download_txt(url, filename, folder="books"):
     book_folder.mkdir(exist_ok=True)
 
     book_filename = f"{sanitize_filename(filename)}.txt"
+    book_filename = book_filename.replace(" ", "_")
     book_path = book_folder / book_filename
 
     try:
@@ -30,23 +31,22 @@ def download_txt(url, filename, folder="books"):
     with open(book_path, "wb") as file:
         file.write(response.content)
 
-    return book_path
 
-
-def download_img(url, filename, folder="books"):
-    book_folder = Path(folder)
-    book_folder.mkdir(exist_ok=True)
+def download_img(url, filename, folder="book_covers"):
+    img_folder = Path(folder)
+    img_folder.mkdir(exist_ok=True)
 
     img_filename = f"{sanitize_filename(unquote(filename))}"
-    img_path = book_folder / img_filename
+    img_path = img_folder / img_filename
 
-    response = requests.get(url)
-    response.raise_for_status()
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+    except (ConnectionError, HTTPError):
+        return
 
     with open(img_path, "wb") as file:
         file.write(response.content)
-
-    return img_path
 
 
 def parse_book_page(response):
@@ -115,9 +115,10 @@ def main():
             continue
 
         content = parse_book_page(response)
-        print("Название:", content["book_title"])
-        print("Автор:", content["book_author"])
-        print()
+        download_book_url = f"https://tululu.org/txt.php?id={book_id}"
+
+        download_txt(download_book_url, content["book_title"])
+        download_img(content["book_img_url"], content["book_img_filename"])
 
 
 if __name__ == "__main__":

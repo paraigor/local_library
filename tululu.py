@@ -8,11 +8,7 @@ from bs4 import BeautifulSoup
 from pathvalidate import sanitize_filename
 from requests.exceptions import ConnectionError, HTTPError
 
-logging.basicConfig(
-    format="%(levelname)s: %(message)s",
-    level=logging.INFO,
-)
-logger = logging.getLogger(__name__)
+logging.basicConfig(format="%(levelname)s: %(message)s")
 
 
 def check_for_redirect(response):
@@ -112,7 +108,7 @@ def main():
             response.raise_for_status()
             check_for_redirect(response)
         except (ConnectionError, HTTPError):
-            logger.warning(f"Книги с id={book_id} нет на сайте.")
+            logging.warning(f"Книги с id={book_id} нет на сайте.")
             continue
 
         content = parse_book_page(response)
@@ -120,13 +116,13 @@ def main():
         try:
             download_txt(book_id, content["book_title"])
         except (ConnectionError, HTTPError):
-            logger.warning(
+            logging.warning(
                 f"Книга <{content['book_title']}>(id={book_id}). Нет текста для скачивания."
             )
         try:
             download_img(content["book_img_url"], content["book_img_filename"])
         except (ConnectionError, HTTPError):
-            logger.warning(
+            logging.warning(
                 f"Файл обложки <{content['book_img_filename']}>(id={book_id}) отсутствует."
             )
 

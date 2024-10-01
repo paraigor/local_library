@@ -17,7 +17,7 @@ def check_for_redirect(response):
         raise HTTPError
 
 
-def download_txt(url, filename, folder="books"):
+def download_txt(book_id, filename, folder="books"):
     book_folder = Path(folder)
     book_folder.mkdir(exist_ok=True)
 
@@ -25,8 +25,11 @@ def download_txt(url, filename, folder="books"):
     book_filename = book_filename.replace(" ", "_")
     book_path = book_folder / book_filename
 
+    url = "https://tululu.org/txt.php"
+    payload = {"id": {book_id}}
+
     try:
-        response = requests.get(url, allow_redirects=False)
+        response = requests.get(url, params=payload, allow_redirects=False)
         response.raise_for_status()
         check_for_redirect(response)
     except (ConnectionError, HTTPError):
@@ -121,9 +124,8 @@ def main():
             continue
 
         content = parse_book_page(response)
-        download_book_url = f"https://tululu.org/txt.php?id={book_id}"
 
-        download_txt(download_book_url, content["book_title"])
+        download_txt(book_id, content["book_title"])
         download_img(content["book_img_url"], content["book_img_filename"])
 
 

@@ -9,7 +9,7 @@ from requests.exceptions import ConnectionError, HTTPError
 
 
 def check_for_redirect(response):
-    if response.status_code != 200:
+    if response.history:
         raise HTTPError
 
 

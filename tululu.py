@@ -1,5 +1,4 @@
 import argparse
-import logging
 from pathlib import Path
 from urllib.parse import unquote, urljoin
 
@@ -8,28 +7,26 @@ from bs4 import BeautifulSoup
 from pathvalidate import sanitize_filename
 from requests.exceptions import ConnectionError, HTTPError
 
-logging.basicConfig(format="%(levelname)s: %(message)s")
-
 
 def check_for_redirect(response):
-    if response.history:
+    if response.status_code != 200:
         raise HTTPError
 
 
-def download_txt(book_id, filename, folder="books"):
+def download_txt(url, filename, folder="books"):
     book_folder = Path(folder)
     book_folder.mkdir(exist_ok=True)
 
-    book_filename = f"{book_id} {sanitize_filename(filename)}.txt"
+    book_filename = f"{sanitize_filename(filename)}.txt"
     book_filename = book_filename.replace(" ", "_")
     book_path = book_folder / book_filename
 
-    url = "https://tululu.org/txt.php"
-    payload = {"id": {book_id}}
-
-    response = requests.get(url, params=payload, timeout=10)
-    response.raise_for_status()
-    check_for_redirect(response)
+    try:
+        response = requests.get(url, allow_redirects=False)
+        response.raise_for_status()
+        check_for_redirect(response)
+    except (ConnectionError, HTTPError):
+        return
 
     with open(book_path, "wb") as file:
         file.write(response.content)
@@ -42,8 +39,11 @@ def download_img(url, filename, folder="book_covers"):
     img_filename = f"{sanitize_filename(unquote(filename))}"
     img_path = img_folder / img_filename
 
-    response = requests.get(url, timeout=10)
-    response.raise_for_status()
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+    except (ConnectionError, HTTPError):
+        return
 
     with open(img_path, "wb") as file:
         file.write(response.content)
@@ -57,16 +57,20 @@ def parse_book_page(response):
     book_author = header.split("::")[1].strip()
 
     book_img = soup.find("div", class_="bookimage").find("img")["src"]
-    book_img_url = urljoin(response.url, book_img)
+    book_img_url = urljoin("https://tululu.org", book_img)
     book_img_filename = book_img.split("/")[-1]
 
     genres_html = soup.find("span", class_="d_book").find_all("a")
-    genres = [genre_html.text for genre_html in genres_html]
+    genres = []
+    for genre_html in genres_html:
+        genre = genre_html.text
+        genres.append(genre)
 
     comments_html = soup.find_all("div", class_="texts")
-    comments = [
-        comment_html.find("span").text for comment_html in comments_html
-    ]
+    comments = []
+    for comment_html in comments_html:
+        comment = comment_html.find("span").text
+        comments.append(comment)
 
     content = {
         "book_title": book_title,
@@ -104,27 +108,17 @@ def main():
     for book_id in range(args.start_id, args.end_id + 1):
         try:
             url = f"https://tululu.org/b{book_id}/"
-            response = requests.get(url, timeout=10)
+            response = requests.get(url, allow_redirects=False)
             response.raise_for_status()
             check_for_redirect(response)
         except (ConnectionError, HTTPError):
-            logging.warning(f"Книги с id={book_id} нет на сайте.")
             continue
 
         content = parse_book_page(response)
+        download_book_url = f"https://tululu.org/txt.php?id={book_id}"
 
-        try:
-            download_txt(book_id, content["book_title"])
-        except (ConnectionError, HTTPError):
-            logging.warning(
-                f"Книга <{content['book_title']}>(id={book_id}). Нет текста для скачивания."
-            )
-        try:
-            download_img(content["book_img_url"], content["book_img_filename"])
-        except (ConnectionError, HTTPError):
-            logging.warning(
-                f"Файл обложки <{content['book_img_filename']}>(id={book_id}) отсутствует."
-            )
+        download_txt(download_book_url, content["book_title"])
+        download_img(content["book_img_url"], content["book_img_filename"])
 
 
 if __name__ == "__main__":

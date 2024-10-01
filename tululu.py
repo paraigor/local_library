@@ -7,7 +7,7 @@ from urllib.parse import unquote, urljoin
 import requests
 from bs4 import BeautifulSoup
 from pathvalidate import sanitize_filename
-from requests.exceptions import ConnectionError, HTTPError
+from requests.exceptions import ConnectionError, HTTPError, Timeout
 
 logging.basicConfig(format="%(levelname)s: %(message)s")
 
@@ -28,7 +28,7 @@ def download_txt(book_id, filename, folder="books"):
     url = "https://tululu.org/txt.php"
     payload = {"id": {book_id}}
 
-    response = requests.get(url, params=payload, allow_redirects=False)
+    response = requests.get(url, params=payload, timeout=10)
     response.raise_for_status()
     check_for_redirect(response)
 
@@ -43,7 +43,7 @@ def download_img(url, filename, folder="book_covers"):
     img_filename = f"{sanitize_filename(unquote(filename))}"
     img_path = img_folder / img_filename
 
-    response = requests.get(url)
+    response = requests.get(url, timeout=10)
     response.raise_for_status()
 
     with open(img_path, "wb") as file:
@@ -105,10 +105,10 @@ def main():
     for book_id in range(args.start_id, args.end_id + 1):
         try:
             url = f"https://tululu.org/b{book_id}/"
-            response = requests.get(url, allow_redirects=False)
+            response = requests.get(url, timeout=10)
             response.raise_for_status()
             check_for_redirect(response)
-        except (ConnectionError, HTTPError):
+        except (ConnectionError, HTTPError, Timeout):
             logging.warning(f"Книги с id={book_id} нет на сайте.")
             sleep(5)
             continue
@@ -117,14 +117,14 @@ def main():
 
         try:
             download_txt(book_id, content["book_title"])
-        except (ConnectionError, HTTPError):
+        except (ConnectionError, HTTPError, Timeout):
             logging.warning(
                 f"Книга <{content['book_title']}>(id={book_id}). Нет текста для скачивания."
             )
             sleep(5)
         try:
             download_img(content["book_img_url"], content["book_img_filename"])
-        except (ConnectionError, HTTPError):
+        except (ConnectionError, HTTPError, Timeout):
             logging.warning(
                 f"Файл обложки <{content['book_img_filename']}>(id={book_id}) отсутствует."
             )

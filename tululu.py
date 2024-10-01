@@ -1,6 +1,7 @@
 import argparse
 import logging
 from pathlib import Path
+from time import sleep
 from urllib.parse import unquote, urljoin
 
 import requests
@@ -30,6 +31,7 @@ def download_txt(url, filename, folder="books"):
         check_for_redirect(response)
     except (ConnectionError, HTTPError):
         logging.warning(f"Книга <{filename}>. Нет текста для скачивания.")
+        sleep(5)
         return
 
     with open(book_path, "wb") as file:
@@ -48,6 +50,7 @@ def download_img(url, filename, folder="book_covers"):
         response.raise_for_status()
     except (ConnectionError, HTTPError):
         logging.warning(f"Файл обложки <{filename}> отсутствует.")
+        sleep(5)
         return
 
     with open(img_path, "wb") as file:
@@ -118,6 +121,7 @@ def main():
             check_for_redirect(response)
         except (ConnectionError, HTTPError):
             logging.warning(f"Книги с id={book_id} нет на сайте.")
+            sleep(5)
             continue
 
         content = parse_book_page(response)

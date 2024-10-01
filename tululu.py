@@ -69,16 +69,12 @@ def parse_book_page(response):
     book_img_filename = book_img.split("/")[-1]
 
     genres_html = soup.find("span", class_="d_book").find_all("a")
-    genres = []
-    for genre_html in genres_html:
-        genre = genre_html.text
-        genres.append(genre)
+    genres = [genre_html.text for genre_html in genres_html]
 
     comments_html = soup.find_all("div", class_="texts")
-    comments = []
-    for comment_html in comments_html:
-        comment = comment_html.find("span").text
-        comments.append(comment)
+    comments = [
+        comment_html.find("span").text for comment_html in comments_html
+    ]
 
     content = {
         "book_title": book_title,

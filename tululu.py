@@ -65,7 +65,7 @@ def parse_book_page(response):
     book_author = header.split("::")[1].strip()
 
     book_img = soup.find("div", class_="bookimage").find("img")["src"]
-    book_img_url = urljoin("https://tululu.org", book_img)
+    book_img_url = urljoin(response.url, book_img)
     book_img_filename = book_img.split("/")[-1]
 
     genres_html = soup.find("span", class_="d_book").find_all("a")

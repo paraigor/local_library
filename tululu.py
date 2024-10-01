@@ -1,4 +1,5 @@
 import argparse
+import logging
 from pathlib import Path
 from urllib.parse import unquote, urljoin
 
@@ -6,6 +7,8 @@ import requests
 from bs4 import BeautifulSoup
 from pathvalidate import sanitize_filename
 from requests.exceptions import ConnectionError, HTTPError
+
+logging.basicConfig(format="%(levelname)s: %(message)s")
 
 
 def check_for_redirect(response):
@@ -26,6 +29,7 @@ def download_txt(url, filename, folder="books"):
         response.raise_for_status()
         check_for_redirect(response)
     except (ConnectionError, HTTPError):
+        logging.warning(f"Книга <{filename}>. Нет текста для скачивания.")
         return
 
     with open(book_path, "wb") as file:
@@ -43,6 +47,7 @@ def download_img(url, filename, folder="book_covers"):
         response = requests.get(url)
         response.raise_for_status()
     except (ConnectionError, HTTPError):
+        logging.warning(f"Файл обложки <{filename}> отсутствует.")
         return
 
     with open(img_path, "wb") as file:
@@ -112,6 +117,7 @@ def main():
             response.raise_for_status()
             check_for_redirect(response)
         except (ConnectionError, HTTPError):
+            logging.warning(f"Книги с id={book_id} нет на сайте.")
             continue
 
         content = parse_book_page(response)

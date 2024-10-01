@@ -21,7 +21,7 @@ def download_txt(book_id, filename, folder="books"):
     book_folder = Path(folder)
     book_folder.mkdir(exist_ok=True)
 
-    book_filename = f"{sanitize_filename(filename)}.txt"
+    book_filename = f"{book_id} {sanitize_filename(filename)}.txt"
     book_filename = book_filename.replace(" ", "_")
     book_path = book_folder / book_filename
 

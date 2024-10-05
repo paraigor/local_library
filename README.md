@@ -1,6 +1,7 @@
 # tululu.org books
 
-Script for downloading books from tululu.org website.
+Script for downloading books from science fiction section of tululu.org website.  
+Script downloads book text, cover image and creates `books.json` file with book detailes and comments.
 
 ### Installation
 
@@ -12,12 +13,32 @@ pip install -r requirements.txt
 
 ### Usage
 
-Script accepts two command-line arguments, `start_id` and `end_id`, start and end IDs of book for range of book being downloaded.
+Script accepts following command-line arguments:  
+`--start_page` - start page number of science fiction section of the site. Default is 1.  
+`--end_page` - end page number of science fiction section of the site. Default is number of last available page in the section.  
+All books from specified pages will be downloaded. Page with `end_page` number included.
 ```
-python tululu.py 20 30
-python tululu.py
+python parse_tululu_category.py --start_page 700
 ```
-If no arguments provided, books with IDs from 1 to 10 will be downloaded.
+Books will be downloaded from all pages from 700 to last one.
+```
+python parse_tululu_category.py --start_page 700 --end_page 700
+```
+Books will be downloaded only from page 700.
+
+`--dest_folder` - folder name to store book texts. Folder to store book cover images will be created with corresponding name `"{dest_folder}_img"`. Default is `"books"`.
+```
+python parse_tululu_category.py --dest_folder my_folder
+```
+`--skip_txt` - if specified, book texts willn't be downloaded.
+```
+python parse_tululu_category.py --skip_txt
+```
+`--skip_imgs` - if specified, book cover images willn't be downloaded.
+```
+python parse_tululu_category.py --skip_imgs
+```
+If no arguments will be specified, default values will be applied.
 
 ### Project Goals
 

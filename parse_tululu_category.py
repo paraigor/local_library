@@ -44,6 +44,23 @@ def create_parser(last_page_of_genre):
         default=last_page_of_genre,
         help="End page number of science fiction section",
     )
+    parser.add_argument(
+        "--dest_folder",
+        default="books",
+        help="Folder name to store books",
+    )
+    parser.add_argument(
+        "--skip_imgs",
+        action="store_true",
+        default=False,
+        help="Download book covers or not",
+    )
+    parser.add_argument(
+        "--skip_txt",
+        action="store_true",
+        default=False,
+        help="Download book texts or not",
+    )
 
     return parser
 
@@ -73,7 +90,7 @@ def get_books_urls(start_page, end_page):
 
 
 def download_txt(url, filename, folder="books"):
-    book_folder = Path(folder)
+    book_folder = Path(sanitize_filename(folder))
     book_folder.mkdir(exist_ok=True)
 
     book_id = "".join([s for s in urlsplit(url)[2] if s.isdigit()])
@@ -95,8 +112,9 @@ def download_txt(url, filename, folder="books"):
     return book_path
 
 
-def download_img(url, filename, folder="books_covers"):
-    img_folder = Path(folder)
+def download_img(url, filename, folder="books"):
+    folder_name = sanitize_filename(folder) + "_img"
+    img_folder = Path(folder_name)
     img_folder.mkdir(exist_ok=True)
 
     img_filename = f"{sanitize_filename(unquote(filename))}"
@@ -111,7 +129,7 @@ def download_img(url, filename, folder="books_covers"):
     return img_path
 
 
-def parse_book_page(response):
+def parse_book_page(response, dest_folder, skip_imgs, skip_txt):
     soup = BeautifulSoup(response.text, "lxml")
     book_url = response.url
 
@@ -132,8 +150,16 @@ def parse_book_page(response):
     comments_html = soup.select(comments_selector)
     comments = [comment_html.text for comment_html in comments_html]
 
-    book_path = download_txt(book_url, book_title)
-    book_cover_path = download_img(book_img_url, book_img_filename)
+    book_path = (
+        download_txt(book_url, book_title, dest_folder)
+        if not skip_txt
+        else None
+    )
+    book_cover_path = (
+        download_img(book_img_url, book_img_filename, dest_folder)
+        if not skip_imgs
+        else None
+    )
 
     content = {
         "book_title": book_title,
@@ -177,7 +203,9 @@ def main():
             continue
 
         try:
-            content = parse_book_page(response)
+            content = parse_book_page(
+                response, args.dest_folder, args.skip_imgs, args.skip_txt
+            )
         except (ConnectionError, HTTPError, Timeout):
             logging.warning(
                 f"Книга {response.url}. Нет текста для скачивания."

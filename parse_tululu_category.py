@@ -1,6 +1,7 @@
 import argparse
 import json
 import logging
+import sys
 from pathlib import Path
 from time import sleep
 from urllib.parse import unquote, urljoin, urlsplit
@@ -13,14 +14,48 @@ from requests.exceptions import ConnectionError, HTTPError, Timeout
 logging.basicConfig(format="%(levelname)s: %(message)s")
 
 
+def get_last_page_of_genre_section():
+    url = "https://tululu.org/l55/"
+    response = requests.get(url, timeout=10)
+    response.raise_for_status()
+    check_for_redirect(response)
+
+    soup = BeautifulSoup(response.text, "lxml")
+
+    return int(soup.select(".npage")[-1].text)
+
+
+def create_parser(last_page_of_genre):
+    parser = argparse.ArgumentParser(
+        description="""Script for downloading science fiction books from tululu.org site.
+                    All science fiction books downloaded default."""
+    )
+    parser.add_argument(
+        "--start_page",
+        nargs="?",
+        type=int,
+        default=1,
+        help="Start page number of science fiction section",
+    )
+    parser.add_argument(
+        "--end_page",
+        nargs="?",
+        type=int,
+        default=last_page_of_genre,
+        help="End page number of science fiction section",
+    )
+
+    return parser
+
+
 def check_for_redirect(response):
     if response.history:
         raise HTTPError
 
 
-def get_books_urls():
+def get_books_urls(start_page, end_page):
     books_urls = []
-    for page_number in range(1, 5):
+    for page_number in range(start_page, end_page + 1):
         url = f"https://tululu.org/l55/{page_number}/"
         response = requests.get(url)
         response.raise_for_status()
@@ -113,27 +148,22 @@ def parse_book_page(response):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="""Script for downloading books from tululu.org site.
-                    Books with IDs from 1 to 10 downloaded default."""
-    )
-    parser.add_argument(
-        "start_id",
-        nargs="?",
-        type=int,
-        default=1,
-        help="Start ID of book for range of book being downloaded",
-    )
-    parser.add_argument(
-        "end_id",
-        nargs="?",
-        type=int,
-        default=10,
-        help="End ID of book for range of book being downloaded",
-    )
+    try:
+        last_page_of_genre = get_last_page_of_genre_section()
+    except (ConnectionError, HTTPError, Timeout):
+        sys.exit("Раздел с научной фантастикой на сайте не доступен")
+
+    parser = create_parser(last_page_of_genre)
     args = parser.parse_args()
 
-    books_urls = get_books_urls()
+    start_page = args.start_page
+    end_page = (
+        args.end_page
+        if args.end_page <= last_page_of_genre
+        else last_page_of_genre
+    )
+
+    books_urls = get_books_urls(start_page, end_page)
     books = []
 
     for book_url in books_urls:

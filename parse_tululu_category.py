@@ -32,14 +32,12 @@ def create_parser(last_page_of_genre):
     )
     parser.add_argument(
         "--start_page",
-        nargs="?",
         type=int,
         default=1,
         help="Start page number of science fiction section",
     )
     parser.add_argument(
         "--end_page",
-        nargs="?",
         type=int,
         default=last_page_of_genre,
         help="End page number of science fiction section",
@@ -53,13 +51,13 @@ def create_parser(last_page_of_genre):
         "--skip_imgs",
         action="store_true",
         default=False,
-        help="Download book covers or not",
+        help="Book cover images willn't be downloaded",
     )
     parser.add_argument(
         "--skip_txt",
         action="store_true",
         default=False,
-        help="Download book texts or not",
+        help="Book texts willn't be downloaded",
     )
 
     return parser
@@ -70,27 +68,28 @@ def check_for_redirect(response):
         raise HTTPError
 
 
-def get_books_urls(start_page, end_page):
-    books_urls = []
+def get_book_urls(start_page, end_page):
+    book_urls = []
     for page_number in range(start_page, end_page + 1):
         url = f"https://tululu.org/l55/{page_number}/"
-        response = requests.get(url)
+        response = requests.get(url, timeout=10)
         response.raise_for_status()
+        check_for_redirect(response)
 
         soup = BeautifulSoup(response.text, "lxml")
         selector = ".d_book .bookimage a"
-        page_books_links = soup.select(selector)
-        page_books_urls = [
+        page_book_links = soup.select(selector)
+        page_book_urls = [
             urljoin(response.url, book_link["href"])
-            for book_link in page_books_links
+            for book_link in page_book_links
         ]
-        books_urls.extend(page_books_urls)
+        book_urls.extend(page_book_urls)
 
-    return books_urls
+    return book_urls
 
 
-def download_txt(url, filename, folder="books"):
-    book_folder = Path(sanitize_filename(folder))
+def download_txt(url, filename, folder):
+    book_folder = Path(folder)
     book_folder.mkdir(exist_ok=True)
 
     book_id = "".join([s for s in urlsplit(url)[2] if s.isdigit()])
@@ -112,8 +111,8 @@ def download_txt(url, filename, folder="books"):
     return book_path
 
 
-def download_img(url, filename, folder="books"):
-    folder_name = sanitize_filename(folder) + "_img"
+def download_img(url, filename, folder):
+    folder_name = folder + "_img"
     img_folder = Path(folder_name)
     img_folder.mkdir(exist_ok=True)
 
@@ -189,10 +188,18 @@ def main():
         else last_page_of_genre
     )
 
-    books_urls = get_books_urls(start_page, end_page)
+    book_folder = sanitize_filename(args.dest_folder)
+    try:
+        book_urls = get_book_urls(start_page, end_page)
+    except (ConnectionError, HTTPError, Timeout):
+        logging.warning(
+            "Не все книги с запрошенных страниц попали в список на скачивание."
+        )
+        sleep(5)
+
     books = []
 
-    for book_url in books_urls:
+    for book_url in book_urls:
         try:
             response = requests.get(book_url, timeout=10)
             response.raise_for_status()
@@ -204,17 +211,17 @@ def main():
 
         try:
             content = parse_book_page(
-                response, args.dest_folder, args.skip_imgs, args.skip_txt
+                response, book_folder, args.skip_imgs, args.skip_txt
             )
         except (ConnectionError, HTTPError, Timeout):
             logging.warning(
-                f"Книга {response.url}. Нет текста для скачивания."
+                f"Книга {book_url}. Нет материала для скачивания."
             )
             sleep(5)
             continue
 
         books.append(content)
-    print(len(books))
+
     with open("books.json", "w", encoding="utf8") as json_file:
         json.dump(books, json_file, ensure_ascii=False)
 

@@ -26,11 +26,13 @@ def get_books_urls():
         response.raise_for_status()
 
         soup = BeautifulSoup(response.text, "lxml")
-        books = soup.find_all("table", class_="d_book")
-        for book in books:
-            book_id = book.find("a")["href"]
-            book_url = urljoin(response.url, book_id)
-            books_urls.append(book_url)
+        selector = ".d_book .bookimage a"
+        page_books_links = soup.select(selector)
+        page_books_urls = [
+            urljoin(response.url, book_link["href"])
+            for book_link in page_books_links
+        ]
+        books_urls.extend(page_books_urls)
 
     return books_urls
 
@@ -78,21 +80,22 @@ def parse_book_page(response):
     soup = BeautifulSoup(response.text, "lxml")
     book_url = response.url
 
-    header = soup.find("h1").text
+    header = soup.select_one("h1").text
     book_title = header.split("::")[0].strip()
     book_author = header.split("::")[1].strip()
 
-    book_img_src = soup.find("div", class_="bookimage").find("img")["src"]
+    book_img_selector = ".bookimage img"
+    book_img_src = soup.select_one(book_img_selector)["src"]
     book_img_url = urljoin(book_url, book_img_src)
     book_img_filename = book_img_src.split("/")[-1]
 
-    genres_html = soup.find("span", class_="d_book").find_all("a")
+    genres_selector = "span.d_book a"
+    genres_html = soup.select(genres_selector)
     genres = [genre_html.text for genre_html in genres_html]
 
-    comments_html = soup.find_all("div", class_="texts")
-    comments = [
-        comment_html.find("span").text for comment_html in comments_html
-    ]
+    comments_selector = ".texts span"
+    comments_html = soup.select(comments_selector)
+    comments = [comment_html.text for comment_html in comments_html]
 
     book_path = download_txt(book_url, book_title)
     book_cover_path = download_img(book_img_url, book_img_filename)
@@ -153,7 +156,7 @@ def main():
             continue
 
         books.append(content)
-
+    print(len(books))
     with open("books.json", "w", encoding="utf8") as json_file:
         json.dump(books, json_file, ensure_ascii=False)
 

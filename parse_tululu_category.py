@@ -2,14 +2,15 @@ import argparse
 import json
 import logging
 import sys
-from pathlib import Path
 from time import sleep
-from urllib.parse import unquote, urljoin, urlsplit
+from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
 from pathvalidate import sanitize_filename
 from requests.exceptions import ConnectionError, HTTPError, Timeout
+
+from tululu import check_for_redirect, download_img, download_txt
 
 logging.basicConfig(format="%(levelname)s: %(message)s")
 
@@ -63,11 +64,6 @@ def create_parser(last_page_of_genre):
     return parser
 
 
-def check_for_redirect(response):
-    if response.history:
-        raise HTTPError
-
-
 def get_book_urls(page_number):
     url = f"https://tululu.org/l55/{page_number}/"
     response = requests.get(url, timeout=10)
@@ -85,48 +81,8 @@ def get_book_urls(page_number):
     return page_book_urls
 
 
-def download_txt(url, title, folder):
-    book_folder = Path(folder)
-    book_folder.mkdir(exist_ok=True)
-
-    book_id = "".join([s for s in urlsplit(url)[2] if s.isdigit()])
-
-    book_filename = f"{book_id} {sanitize_filename(title)}.txt"
-    book_filename = book_filename.replace(" ", "_")
-    book_path = book_folder / book_filename
-
-    url = "https://tululu.org/txt.php"
-    payload = {"id": book_id}
-
-    response = requests.get(url, params=payload, timeout=10)
-    response.raise_for_status()
-    check_for_redirect(response)
-
-    with open(book_path, "wb") as file:
-        file.write(response.content)
-
-    return book_path
-
-
-def download_img(url, folder):
-    folder_name = folder + "_img"
-    img_folder = Path(folder_name)
-    img_folder.mkdir(exist_ok=True)
-    img_filename = f"{sanitize_filename(unquote(url.split('/')[-1]))}"
-    img_path = img_folder / img_filename
-
-    response = requests.get(url, timeout=10)
-    response.raise_for_status()
-
-    with open(img_path, "wb") as file:
-        file.write(response.content)
-
-    return img_path
-
-
 def parse_book_page(response):
     soup = BeautifulSoup(response.text, "lxml")
-    book_url = response.url
 
     header = soup.select_one("h1").text
     book_title = header.split("::")[0].strip()
@@ -134,7 +90,6 @@ def parse_book_page(response):
 
     book_img_selector = ".bookimage img"
     book_img_src = soup.select_one(book_img_selector)["src"]
-    book_img_url = urljoin(book_url, book_img_src)
 
     genres_selector = "span.d_book a"
     genres_html = soup.select(genres_selector)
@@ -147,7 +102,7 @@ def parse_book_page(response):
     content = {
         "book_title": book_title,
         "book_author": book_author,
-        "book_img_url": book_img_url,
+        "book_img_src": book_img_src,
         "genres": genres,
         "comments": comments,
     }
@@ -205,7 +160,7 @@ def main():
                 else None
             )
             book_cover_path = (
-                download_img(content["book_img_url"], book_folder)
+                download_img(book_url, content["book_img_src"], book_folder)
                 if not args.skip_imgs
                 else None
             )

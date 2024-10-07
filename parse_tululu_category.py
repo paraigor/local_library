@@ -68,24 +68,21 @@ def check_for_redirect(response):
         raise HTTPError
 
 
-def get_book_urls(start_page, end_page):
-    book_urls = []
-    for page_number in range(start_page, end_page + 1):
-        url = f"https://tululu.org/l55/{page_number}/"
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-        check_for_redirect(response)
+def get_book_urls(page_number):
+    url = f"https://tululu.org/l55/{page_number}/"
+    response = requests.get(url, timeout=10)
+    response.raise_for_status()
+    check_for_redirect(response)
 
-        soup = BeautifulSoup(response.text, "lxml")
-        selector = ".d_book .bookimage a"
-        page_book_links = soup.select(selector)
-        page_book_urls = [
-            urljoin(response.url, book_link["href"])
-            for book_link in page_book_links
-        ]
-        book_urls.extend(page_book_urls)
+    soup = BeautifulSoup(response.text, "lxml")
+    selector = ".d_book .bookimage a"
+    page_book_links = soup.select(selector)
+    page_book_urls = [
+        urljoin(response.url, book_link["href"])
+        for book_link in page_book_links
+    ]
 
-    return book_urls
+    return page_book_urls
 
 
 def download_txt(url, filename, folder):
@@ -189,13 +186,18 @@ def main():
     )
 
     book_folder = sanitize_filename(args.dest_folder)
-    try:
-        book_urls = get_book_urls(start_page, end_page)
-    except (ConnectionError, HTTPError, Timeout):
-        logging.warning(
-            "Не все книги с запрошенных страниц попали в список на скачивание."
-        )
-        sleep(5)
+
+    book_urls = []
+    for page_number in range(start_page, end_page + 1):
+        try:
+            page_book_urls = get_book_urls(page_number)
+        except (ConnectionError, HTTPError, Timeout):
+            logging.warning(
+                f"Страница {page_number} раздела научной фантастики недоступна"
+            )
+            sleep(5)
+            continue
+        book_urls.extend(page_book_urls)
 
     books = []
 
@@ -205,7 +207,7 @@ def main():
             response.raise_for_status()
             check_for_redirect(response)
         except (ConnectionError, HTTPError, Timeout):
-            logging.warning(f"Книги {book_url} нет на сайте.")
+            logging.warning(f"Книга {book_url} недоступна на сайте")
             sleep(5)
             continue
 
@@ -215,7 +217,7 @@ def main():
             )
         except (ConnectionError, HTTPError, Timeout):
             logging.warning(
-                f"Книга {book_url}. Нет материала для скачивания."
+                f"Книга {book_url}. Недоступен материал для скачивания"
             )
             sleep(5)
             continue

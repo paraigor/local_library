@@ -85,13 +85,13 @@ def get_book_urls(page_number):
     return page_book_urls
 
 
-def download_txt(url, filename, folder):
+def download_txt(url, title, folder):
     book_folder = Path(folder)
     book_folder.mkdir(exist_ok=True)
 
     book_id = "".join([s for s in urlsplit(url)[2] if s.isdigit()])
 
-    book_filename = f"{book_id} {sanitize_filename(filename)}.txt"
+    book_filename = f"{book_id} {sanitize_filename(title)}.txt"
     book_filename = book_filename.replace(" ", "_")
     book_path = book_folder / book_filename
 
@@ -108,12 +108,11 @@ def download_txt(url, filename, folder):
     return book_path
 
 
-def download_img(url, filename, folder):
+def download_img(url, folder):
     folder_name = folder + "_img"
     img_folder = Path(folder_name)
     img_folder.mkdir(exist_ok=True)
-
-    img_filename = f"{sanitize_filename(unquote(filename))}"
+    img_filename = f"{sanitize_filename(unquote(url.split('/')[-1]))}"
     img_path = img_folder / img_filename
 
     response = requests.get(url, timeout=10)
@@ -125,7 +124,7 @@ def download_img(url, filename, folder):
     return img_path
 
 
-def parse_book_page(response, dest_folder, skip_imgs, skip_txt):
+def parse_book_page(response):
     soup = BeautifulSoup(response.text, "lxml")
     book_url = response.url
 
@@ -136,7 +135,6 @@ def parse_book_page(response, dest_folder, skip_imgs, skip_txt):
     book_img_selector = ".bookimage img"
     book_img_src = soup.select_one(book_img_selector)["src"]
     book_img_url = urljoin(book_url, book_img_src)
-    book_img_filename = book_img_src.split("/")[-1]
 
     genres_selector = "span.d_book a"
     genres_html = soup.select(genres_selector)
@@ -146,22 +144,10 @@ def parse_book_page(response, dest_folder, skip_imgs, skip_txt):
     comments_html = soup.select(comments_selector)
     comments = [comment_html.text for comment_html in comments_html]
 
-    book_path = (
-        download_txt(book_url, book_title, dest_folder)
-        if not skip_txt
-        else None
-    )
-    book_cover_path = (
-        download_img(book_img_url, book_img_filename, dest_folder)
-        if not skip_imgs
-        else None
-    )
-
     content = {
         "book_title": book_title,
         "book_author": book_author,
-        "book_path": str(book_path),
-        "book_cover_path": str(book_cover_path),
+        "book_img_url": book_img_url,
         "genres": genres,
         "comments": comments,
     }
@@ -211,9 +197,17 @@ def main():
             sleep(5)
             continue
 
+        content = parse_book_page(response)
         try:
-            content = parse_book_page(
-                response, book_folder, args.skip_imgs, args.skip_txt
+            book_path = (
+                download_txt(book_url, content["book_title"], book_folder)
+                if not args.skip_txt
+                else None
+            )
+            book_cover_path = (
+                download_img(content["book_img_url"], book_folder)
+                if not args.skip_imgs
+                else None
             )
         except (ConnectionError, HTTPError, Timeout):
             logging.warning(
@@ -221,6 +215,8 @@ def main():
             )
             sleep(5)
             continue
+        content["book_path"] = str(book_path)
+        content["book_cover_path"] = str(book_cover_path)
 
         books.append(content)
 

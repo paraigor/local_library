@@ -12,7 +12,7 @@ from requests.exceptions import ConnectionError, HTTPError, Timeout
 
 from tululu import check_for_redirect, download_img, download_txt
 
-logging.basicConfig(format="%(levelname)s: %(message)s")
+logger = logging.getLogger(__file__)
 
 
 def get_last_page_of_genre_section():
@@ -133,7 +133,7 @@ def main():
         try:
             page_book_urls = get_book_urls(page_number)
         except (ConnectionError, HTTPError, Timeout):
-            logging.warning(
+            logger.warning(
                 f"Страница {page_number} раздела научной фантастики недоступна"
             )
             sleep(5)
@@ -148,7 +148,7 @@ def main():
             response.raise_for_status()
             check_for_redirect(response)
         except (ConnectionError, HTTPError, Timeout):
-            logging.warning(f"Книга {book_url} недоступна на сайте")
+            logger.warning(f"Книга {book_url} недоступна на сайте")
             sleep(5)
             continue
 
@@ -165,7 +165,7 @@ def main():
                 else None
             )
         except (ConnectionError, HTTPError, Timeout):
-            logging.warning(
+            logger.warning(
                 f"Книга {book_url}. Недоступен материал для скачивания"
             )
             sleep(5)
@@ -180,4 +180,5 @@ def main():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(format="%(levelname)s: %(message)s")
     main()

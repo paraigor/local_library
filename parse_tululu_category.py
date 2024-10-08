@@ -87,6 +87,7 @@ def get_book_urls(page_number):
 
 
 def main():
+    logging.basicConfig(format="%(levelname)s: %(message)s")
     try:
         last_page_of_genre = get_last_page_of_genre_section()
     except (ConnectionError, HTTPError, Timeout):
@@ -156,5 +157,4 @@ def main():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(format="%(levelname)s: %(message)s")
     main()

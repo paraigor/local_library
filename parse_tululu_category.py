@@ -10,7 +10,12 @@ from bs4 import BeautifulSoup
 from pathvalidate import sanitize_filename
 from requests.exceptions import ConnectionError, HTTPError, Timeout
 
-from tululu import check_for_redirect, download_img, download_txt
+from tululu import (
+    check_for_redirect,
+    download_img,
+    download_txt,
+    parse_book_page,
+)
 
 logger = logging.getLogger(__file__)
 
@@ -79,35 +84,6 @@ def get_book_urls(page_number):
     ]
 
     return page_book_urls
-
-
-def parse_book_page(response):
-    soup = BeautifulSoup(response.text, "lxml")
-
-    header = soup.select_one("h1").text
-    book_title = header.split("::")[0].strip()
-    book_author = header.split("::")[1].strip()
-
-    book_img_selector = ".bookimage img"
-    book_img_src = soup.select_one(book_img_selector)["src"]
-
-    genres_selector = "span.d_book a"
-    genres_html = soup.select(genres_selector)
-    genres = [genre_html.text for genre_html in genres_html]
-
-    comments_selector = ".texts span"
-    comments_html = soup.select(comments_selector)
-    comments = [comment_html.text for comment_html in comments_html]
-
-    content = {
-        "book_title": book_title,
-        "book_author": book_author,
-        "book_img_src": book_img_src,
-        "genres": genres,
-        "comments": comments,
-    }
-
-    return content
 
 
 def main():

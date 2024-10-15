@@ -147,8 +147,8 @@ def main():
             )
             sleep(5)
             continue
-        content["book_path"] = str(book_path)
-        content["book_cover_path"] = str(book_cover_path)
+        content["book_path"] = book_path.as_posix()
+        content["book_cover_path"] = book_cover_path.as_posix()
 
         books.append(content)
 

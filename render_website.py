@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from livereload import Server
@@ -10,18 +11,28 @@ def on_reload():
         books_json = file.read()
 
     books = json.loads(books_json)
-    double_books = list(chunked(books, 2))
 
-    env = Environment(
-        loader=FileSystemLoader("template"),
-        autoescape=select_autoescape(["html"]),
-    )
-    template = env.get_template("template.html")
+    pages_folder = Path("pages")
+    pages_folder.mkdir(exist_ok=True)
+    books_num_on_page = 10
+    books_by_pages = list(chunked(books, books_num_on_page))
 
-    rendered_page = template.render(double_books=double_books)
+    for page_num, books in enumerate(books_by_pages, 1):
+        double_books = list(chunked(books, 2))
 
-    with open("index.html", "w", encoding="utf8") as file:
-        file.write(rendered_page)
+        env = Environment(
+            loader=FileSystemLoader("template"),
+            autoescape=select_autoescape(["html"]),
+        )
+        template = env.get_template("template.html")
+
+        rendered_page = template.render(double_books=double_books)
+
+        page_filename = f"index{page_num}.html"
+        page_path = pages_folder / page_filename
+
+        with open(page_path, "w", encoding="utf8") as file:
+            file.write(rendered_page)
 
 
 def main():

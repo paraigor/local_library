@@ -13,8 +13,8 @@ def on_reload():
 
     books = json.loads(books_json)
 
-    pages_folder = Path("pages")
-    pages_folder.mkdir(exist_ok=True)
+    pages_folder = Path("site")
+    # pages_folder.mkdir(exist_ok=True)
     books_num_on_page = 10
     total_pages = math.ceil(len(books) / books_num_on_page)
     books_by_pages = list(chunked(books, books_num_on_page))

@@ -6,7 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="icon" type="image/png" href="favicon/favicon-48x48.png" sizes="48x48" />
+    <link rel="icon" type="image/svg+xml" href="favicon/favicon.svg" />
+    <link rel="shortcut icon" href="favicon/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Tululu" />
+    <link rel="manifest" href="favicon/site.webmanifest" />
 
     <title>Hello, world!</title>
   </head>
@@ -21,7 +27,6 @@
           {% else %}
             <li class="page-item"><a class="page-link" href="index{{ curr_page - 1 }}.html">Назад</a></li>
           {% endif %}
-          
           {% for page in range(1, total_pages + 1) %}
             {% if page == curr_page %}
               <li class="page-item active" aria-current="page">
@@ -31,7 +36,6 @@
               <li class="page-item"><a class="page-link" href="index{{ page }}.html">{{ page }}</a></li>
             {% endif %}
           {% endfor %}
-
           {% if curr_page == total_pages %}
             <li class="page-item disabled">
               <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Вперед</a>
@@ -69,8 +73,8 @@
       {% endfor %}
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
+    <script src="js/jquery-3.5.1.slim.min.js"></script>
+    <script src="js/bootstrap.bundle.min.js"></script>
 
   </body>
 </html>

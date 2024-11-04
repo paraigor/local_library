@@ -3,7 +3,7 @@
 Script for downloading books from science fiction section of tululu.org website.  
 Script downloads book text, cover image and creates `books.json` file with book detailes and comments.
 
-# [Go to rendered site](https://paraigor.github.io/local_library/pages/index1.html)
+## [Go to library](https://paraigor.github.io/local_library/pages/index1.html)
 
 ### Installation
 

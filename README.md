@@ -42,6 +42,8 @@ python parse_tululu_category.py --skip_imgs
 ```
 If no arguments will be specified, default values will be applied.
 
+After library is downloaded, you can visit it locally on your computer. For this, just doubleclick on file `index1.html` from `pages` folder.
+
 ### Project Goals
 
 This code was written for educational purposes as part of an online course for web developers at [dvmn.org](https://dvmn.org/). 

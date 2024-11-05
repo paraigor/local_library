@@ -3,11 +3,10 @@ import math
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-from livereload import Server
 from more_itertools import chunked
 
 
-def on_reload():
+def main():
     with open("books.json", encoding="utf8") as file:
         books_json = file.read()
 
@@ -39,14 +38,6 @@ def on_reload():
 
         with open(page_path, "w", encoding="utf8") as file:
             file.write(rendered_page)
-
-
-def main():
-    on_reload()
-
-    server = Server()
-    server.watch("template/template.html", on_reload)
-    server.serve(root=".")
 
 
 if __name__ == "__main__":

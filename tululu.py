@@ -13,7 +13,9 @@ def check_for_redirect(response):
 
 
 def download_txt(url, title, folder):
-    book_folder = Path(folder)
+    media_folder = Path("media")
+    media_folder.mkdir(exist_ok=True)
+    book_folder = media_folder / Path(folder)
     book_folder.mkdir(exist_ok=True)
 
     book_id = "".join([s for s in urlsplit(url)[2] if s.isdigit()])
@@ -38,7 +40,9 @@ def download_txt(url, title, folder):
 def download_img(url, img_src, folder):
     img_url = urljoin(url, img_src)
     folder_name = folder + "_img"
-    img_folder = Path(folder_name)
+    media_folder = Path("media")
+    media_folder.mkdir(exist_ok=True)
+    img_folder = media_folder / Path(folder_name)
     img_folder.mkdir(exist_ok=True)
     img_filename = f"{sanitize_filename(unquote(img_src.split('/')[-1]))}"
     img_path = img_folder / img_filename

@@ -1,3 +1,4 @@
+import argparse
 import json
 import math
 from pathlib import Path
@@ -6,7 +7,24 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from more_itertools import chunked
 
 
+def create_parser():
+    parser = argparse.ArgumentParser(
+        description="""Script for generating local website with downloaded books."""
+    )
+    parser.add_argument(
+        "--books_db",
+        type=Path,
+        default=Path("books.json"),
+        help="Path to json db file with information of downloaded books",
+    )
+
+    return parser
+
+
 def main():
+    parser = create_parser()
+    args = parser.parse_args()
+
     with open("books.json", encoding="utf8") as file:
         books_json = file.read()
 

@@ -1,10 +1,26 @@
 import argparse
 import json
 import math
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
+from urllib import parse
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from more_itertools import chunked
+
+
+class web_server(BaseHTTPRequestHandler):
+    def do_GET(self):
+        try:
+            # Reading the file
+            file_to_open = open(self.path[1:]).read()
+            self.send_response(200)
+        except:
+            file_to_open = "File not found"
+            self.send_response(404)
+
+        self.end_headers()
+        self.wfile.write(bytes(file_to_open, "utf-8"))
 
 
 def create_parser():
@@ -58,6 +74,10 @@ def main():
 
         with open(page_path, "w", encoding="utf8") as file:
             file.write(rendered_page)
+
+    server = HTTPServer(("localhost", 8080), web_server)
+    print("Starting server, use <Ctrl-C> to stop")
+    server.serve_forever()
 
 
 if __name__ == "__main__":

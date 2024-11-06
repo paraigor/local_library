@@ -25,10 +25,12 @@ def main():
     parser = create_parser()
     args = parser.parse_args()
 
-    with open("books.json", encoding="utf8") as file:
-        books_json = file.read()
-
-    books = json.loads(books_json)
+    file_path = args.books_db
+    if file_path.exists():
+        with open(file_path, encoding="utf8") as file:
+            books = json.load(file)
+    else:
+        exit("Путь к файлу базы указан неверно")
 
     pages_folder = Path("pages")
     pages_folder.mkdir(exist_ok=True)

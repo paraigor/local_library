@@ -28,11 +28,9 @@ def main():
     file_path = args.books_db
     if file_path.exists():
         with open(file_path, encoding="utf8") as file:
-            books_json = file.read()
+            books = json.load(file)
     else:
         exit("Путь к файлу базы указан неверно")
-
-    books = json.loads(books_json)
 
     pages_folder = Path("pages")
     pages_folder.mkdir(exist_ok=True)

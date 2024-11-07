@@ -31,8 +31,8 @@ def download_txt(url, title, folder):
     response.raise_for_status()
     check_for_redirect(response)
 
-    with open(book_path, "wb") as file:
-        file.write(response.content)
+    with open(book_path, "w", encoding="utf-8-sig") as file:
+        file.write(response.text)
 
     return book_path
 
